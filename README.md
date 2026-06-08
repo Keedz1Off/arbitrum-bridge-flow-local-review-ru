@@ -29,10 +29,10 @@ concepts/
 Отдельные важные понятия, например Arbitrum address aliasing.
 
 ```text
-breaksync/
+break-think/
 ```
 
-Папка под будущий ручной BreakSync-style анализ.
+Папка под будущий ручной break-think-style анализ.
 
 ---
 
@@ -107,7 +107,7 @@ arbitrum-bridge-flow-local-review-ru/
 |-- concepts/
 |   `-- address-aliasing.md
 |
-`-- breaksync/
+`-- break-think/
     `-- README.md
 ```
 
@@ -124,7 +124,7 @@ arbitrum-bridge-flow-local-review-ru/
 - инвариантах
 - важных bridge concepts
 
-`breaksync/` зарезервирован под будущий более глубокий ручной анализ.
+`break-think/` зарезервирован под будущий более глубокий ручной анализ.
 
 ---
 
