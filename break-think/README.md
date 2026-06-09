@@ -1,7 +1,30 @@
-# break-think Analysis
+# Break Think Analysis
 
-Эта папка зарезервирована под будущий break-think-style ручной анализ.
+Эта папка для ручного Break Think анализа.
 
-Идея этого раздела — отдельно проходить каждую важную функцию и думать, где могут ломаться инварианты, edge cases и security assumptions.
+Формат:
 
-Полный break-think-анализ пока не добавлен.
+```text
+Invariant -> Consequence
+```
+
+## MAIN DEPOSIT FUNCTIONS
+
+```text
+outboundTransfer(...)
+outboundEscrowTransfer(...)
+finalizeInboundTransfer(...)
+```
+
+## MAIN WITHDRAWAL FUNCTIONS
+
+```text
+outboundTransfer(...) / withdraw(...)
+burn(...) / lock(...)
+finalizeInboundTransfer(...) / finalizeWithdrawal(...)
+```
+
+## 1 INVARIANT
+
+
+## 2 CONSEQUENCES
