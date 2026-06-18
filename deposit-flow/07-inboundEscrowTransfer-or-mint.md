@@ -1,19 +1,106 @@
 ﻿# Function Review: inboundEscrowTransfer(...) / mint(...)
 
-## Что делает функция
+## Код функции
 
-Это финальный token credit step на L2.
-
-После проверки bridge message функция release/mint токены получателю.
-
-## Главные инварианты
-
-```text
-1. Credited amount on L2 must equal verified L1 escrowed amount.
-2. The recipient must match the authenticated bridge message.
-3. The token credited on L2 must match the intended L2 token.
+```solidity
+function inboundEscrowTransfer(
+    address _l2Address,
+    address _dest,
+    uint256 _amount
+) internal virtual {
+    // this method is virtual since different subclasses can handle escrow differently
+    IArbToken(_l2Address).bridgeMint(_dest, _amount);
+}
 ```
 
-## Важная мысль
+---
 
-Если здесь поменять amount/token/recipient, весь предыдущий flow может быть правильным, но финальный результат будет неправильным.
+## Function Explanation
+
+`inboundEscrowTransfer(...)` / `mint(...)` is the final token credit step in the deposit flow.
+
+After the bridge message is finalized, this function releases or mints tokens to the L2 recipient.
+
+Main idea:
+
+```text
+The final token credit must match the verified bridge message.
+```
+
+This is where bridge accounting becomes an actual user token balance.
+
+---
+
+## Важные моменты логики
+
+### Authorized Caller
+
+Mint or release logic should only be callable by the trusted gateway/finalizer.
+
+If this function is callable by an unauthorized account, tokens may be minted or released without a real bridge message.
+
+---
+
+### Amount Used for Credit
+
+The credited amount should come from verified finalization data.
+
+It should not be independently controlled by a user at this stage.
+
+---
+
+### Recipient
+
+Recipient must be the same recipient that was encoded in the authenticated bridge message.
+
+If the recipient can be changed here, funds can be redirected.
+
+---
+
+### Token Behavior
+
+If this step transfers tokens instead of minting, token behavior may matter.
+
+If this step mints representation tokens, minter permissions and supply accounting matter.
+
+---
+
+## Инварианты
+
+### Main Invariant 1
+
+```text
+Minted / released amount on L2 must equal the verified L1 escrowed amount.
+```
+
+### Main Invariant 2
+
+```text
+Only the authorized gateway/finalizer may mint or release tokens.
+```
+
+### Main Invariant 3
+
+```text
+Recipient must match the finalized bridge message.
+```
+
+## Additional Invariants
+
+### Additional Invariant 1
+
+```text
+The credited token must be the expected L2 token.
+```
+
+### Additional Invariant 2
+
+```text
+L2 token supply must remain backed by L1 escrow.
+```
+
+### Additional Invariant 3
+
+```text
+The same finalized message must not trigger mint/release twice.
+```

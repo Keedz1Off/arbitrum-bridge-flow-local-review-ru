@@ -1,11 +1,5 @@
 ﻿# Function Review: createRetryableTicket(...)
 
-## Что делает функция
-
-`createRetryableTicket(...)` создает L1 -> L2 retryable ticket.
-
-Retryable ticket - это механизм Arbitrum для доставки и исполнения сообщения на L2.
-
 ## Код функции
 
 ```solidity
@@ -18,7 +12,7 @@ function createRetryableTicket(
     uint256 gasLimit,
     uint256 maxFeePerGas,
     bytes calldata data
-) external payable returns (uint256) {
+) external payable whenNotPaused onlyAllowed returns (uint256) {
     return _createRetryableTicket(
         to,
         l2CallValue,
@@ -27,24 +21,105 @@ function createRetryableTicket(
         callValueRefundAddress,
         gasLimit,
         maxFeePerGas,
+        msg.value,
         data
     );
 }
 ```
 
-## Главные инварианты
+---
+
+## Function Explanation
+
+`createRetryableTicket(...)` creates the L1 -> L2 retryable ticket.
+
+In the deposit flow, this is the step where prepared calldata is submitted to Arbitrum so it can later execute on L2.
+
+Main idea:
 
 ```text
-1. Retryable ticket must target the correct L2 gateway.
-2. Retryable calldata must match the verified L1 deposit.
-3. Retryable execution budget must be sufficient for finalization.
+The retryable ticket transports the deposit message from L1 to L2.
 ```
 
-## Важные параметры
+Эта функция is important because a valid retryable ticket can still be dangerous if it targets the wrong L2 contract or contains wrong calldata.
+
+---
+
+## Важные моменты логики
+
+### L2 Target
+
+The retryable ticket must target the correct L2 gateway.
 
 ```text
-to = L2 target
-calldata = что будет исполнено на L2
-gasLimit / maxFeePerGas = execution budget
-refund addresses = куда вернуть unused funds
+wrong L2 target = wrong execution path
+```
+
+If the target is wrong, the message may fail or execute unintended logic.
+
+---
+
+### Calldata Passed to L2
+
+The calldata passed into the retryable ticket should already contain verified deposit values.
+
+Important values:
+
+- amount
+- token
+- recipient
+- finalize selector
+
+The ticket should not carry corrupted or user-overridden bridge data.
+
+---
+
+### Gas and Refund Parameters
+
+Retryable tickets depend on execution budget and refund addresses.
+
+Important values may include:
+
+- gas limit
+- max fee per gas
+- max submission cost
+- excess fee refund address
+- call value refund address
+
+If these values are unsafe, the deposit may become delayed, fail, or redirect value unexpectedly.
+
+---
+
+## Инварианты
+
+### Main Invariant 1
+
+```text
+Retryable ticket must target the correct L2 gateway.
+```
+
+### Main Invariant 2
+
+```text
+Retryable calldata must match the verified L1 deposit.
+```
+
+### Main Invariant 3
+
+```text
+Retryable execution budget must be sufficient for finalization.
+```
+
+## Additional Invariants
+
+### Additional Invariant 1
+
+```text
+Refund handling must not corrupt bridge accounting.
+```
+
+### Additional Invariant 2
+
+```text
+The ticket must not allow the same deposit to be finalized twice.
 ```

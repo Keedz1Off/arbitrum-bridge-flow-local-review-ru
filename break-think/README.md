@@ -1,18 +1,45 @@
-﻿# Break Think
+﻿# Break Think Analysis
 
-Эта папка для ручного анализа последствий нарушения инвариантов.
+This folder is for manual Break Think analysis.
 
-Формат:
-
-```text
-ИНВАРИАНТ
-
-ПОСЛЕДСТВИЯ
-```
-
-Фокус:
+Break Think means:
 
 ```text
-сначала главные инварианты
-потом дополнительные проверки
+Invariant -> Consequence
 ```
+
+## Main Deposit Functions
+
+```text
+outboundTransfer(...)
+outboundEscrowTransfer(...)
+createRetryableTicket(...)
+AbsInbox._createRetryableTicket(...)
+finalizeInboundTransfer(...)
+```
+
+## Main Withdrawal Functions
+
+```text
+outboundTransfer(...) / withdraw(...)
+burn(...)
+finalizeInboundTransfer(...) / finalizeWithdrawal(...)
+```
+
+## Format
+
+```text
+Function:
+
+Invariant:
+
+Consequences:
+```
+## Important 
+
+Here is most important functions!!!
+
+
+
+
+

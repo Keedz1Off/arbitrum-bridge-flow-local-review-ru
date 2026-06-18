@@ -1,24 +1,159 @@
 ﻿# Function Review: finalizeInboundTransfer(...)
 
-## Что делает функция
+## Код функции
 
-`finalizeInboundTransfer(...)` завершает deposit на L2.
+```solidity
+function finalizeInboundTransfer(
+    address _token,
+    address _from,
+    address _to,
+    uint256 _amount,
+    bytes calldata _data
+) external payable override onlyCounterpartGateway {
+    (bytes memory gatewayData, bytes memory callHookData) = GatewayMessageHandler
+        .parseFromL1GatewayMsg(_data);
 
-Она принимает bridge message и должна mint/release токены правильному recipient.
+    if (callHookData.length != 0) {
+        // callHookData should always be 0 since inboundEscrowAndCall is disabled
+        callHookData = bytes("");
+    }
 
-## Главные инварианты
+    address expectedAddress = calculateL2TokenAddress(_token);
 
-```text
-1. Only an authentic L1 -> L2 bridge message may finalize a deposit.
-2. The counterpart gateway must be the expected gateway.
-3. Decoded recipient must match the intended L2 recipient.
-4. Decoded amount must match the verified L1 amount.
+    if (!expectedAddress.isContract()) {
+        bool shouldHalt = handleNoContract(
+            _token,
+            expectedAddress,
+            _from,
+            _to,
+            _amount,
+            gatewayData
+        );
+        if (shouldHalt) return;
+    }
+
+    // validate if L1 address supplied matches that of the expected L2 address
+    bool shouldWithdraw = !_isValidTokenAddress(_token, expectedAddress);
+    if (shouldWithdraw) {
+        // we don't need the return value from triggerWithdrawal since this is forcing
+        // a withdrawal back to the L1 instead of composing with a L2 dapp
+        triggerWithdrawal(_token, address(this), _from, _amount, "");
+        return;
+    }
+
+    inboundEscrowTransfer(expectedAddress, _to, _amount);
+    emit DepositFinalized(_token, _from, _to, _amount);
+
+    return;
+}
 ```
 
-## Важный security boundary
+---
+
+## Function Explanation
+
+`finalizeInboundTransfer(...)` finalizes the deposit on the destination chain.
+
+For the deposit flow, this function is executed on L2 after the L1 -> L2 message arrives.
+
+Main idea:
 
 ```text
-message authenticity -> token mapping -> amount -> recipient
+Only an authentic bridge message should be able to finalize a deposit.
 ```
 
-Если auth слабая, attacker может сделать ghost mint.
+Эта функция is critical because it turns decoded cross-chain message data into real L2 token credit.
+
+---
+
+## Важные моменты логики
+
+### Authentication Check
+
+If the function checks `msg.sender`, bridge messenger, or counterpart gateway, this is the auth boundary.
+
+The function must make sure the call came from the expected bridge path.
+
+Weak auth here can allow forged deposits.
+
+---
+
+### Address Aliasing
+
+In Arbitrum, if an L1 contract sends a message to L2, the L2 side may see an aliased sender address.
+
+```text
+raw L1 gateway address != aliased L2 sender address
+```
+
+If this function checks the raw address when it should check the aliased address, sender validation may be wrong.
+
+---
+
+### Decoded Transfer Values
+
+Эта функция usually receives or decodes:
+
+- token
+- sender
+- recipient
+- amount
+- extra data
+
+These values must match what was encoded on L1.
+
+---
+
+### Mint / Release Step
+
+After validation, this function may call mint or inbound escrow release logic.
+
+That final token credit must use the verified amount and recipient.
+
+---
+
+## Инварианты
+
+### Main Invariant 1
+
+```text
+Only an authentic L1 -> L2 bridge message may finalize a deposit.
+```
+
+### Main Invariant 2
+
+```text
+The counterpart gateway must be the expected gateway.
+```
+
+### Main Invariant 3
+
+```text
+Address aliasing must be handled correctly when relevant.
+```
+
+## Additional Invariants
+
+### Additional Invariant 1
+
+```text
+Decoded amount must match the amount backed by L1 escrow.
+```
+
+### Additional Invariant 2
+
+```text
+Decoded recipient must match the intended L2 recipient.
+```
+
+### Additional Invariant 3
+
+```text
+Decoded token must match the correct token mapping.
+```
+
+### Additional Invariant 4
+
+```text
+The same message must not finalize twice.
+```
