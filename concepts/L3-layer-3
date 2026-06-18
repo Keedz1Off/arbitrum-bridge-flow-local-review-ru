@@ -1,0 +1,15 @@
+﻿# L3 / Layer 3
+
+L3 - это сеть, построенная поверх L2.
+
+В Arbitrum context это часто связано с Orbit chains.
+
+Простая схема:
+
+```text
+Ethereum L1
+-> Arbitrum L2
+-> Orbit L3
+```
+
+Для аудита важно понимать, где находится source chain, destination chain и какой bridge path используется.

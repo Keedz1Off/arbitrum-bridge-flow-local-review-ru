@@ -1,93 +1,27 @@
-# Function Review: AbsInbox._createRetryableTicket(...)
+﻿# Function Review: AbsInbox._createRetryableTicket(...)
 
-## Function Code
+## Что делает функция
 
-```solidity
-function _createRetryableTicket(
-    address to,
-    uint256 l2CallValue,
-    uint256 maxSubmissionCost,
-    address excessFeeRefundAddress,
-    address callValueRefundAddress,
-    uint256 gasLimit,
-    uint256 maxFeePerGas,
-    uint256 amount,
-    bytes calldata data
-) internal returns (uint256) {
-    uint256 amountToBeMintedOnL2 = _fromNativeTo18Decimals(amount);
-    if (amountToBeMintedOnL2 < (maxSubmissionCost + l2CallValue + gasLimit * maxFeePerGas)) {
-        revert InsufficientValue(
-            maxSubmissionCost + l2CallValue + gasLimit * maxFeePerGas, amountToBeMintedOnL2
-        );
-    }
+`AbsInbox._createRetryableTicket(...)` - низкоуровневая часть создания retryable ticket.
 
-    if (AddressUpgradeable.isContract(excessFeeRefundAddress)) {
-        excessFeeRefundAddress = AddressAliasHelper.applyL1ToL2Alias(excessFeeRefundAddress);
-    }
-    if (AddressUpgradeable.isContract(callValueRefundAddress)) {
-        callValueRefundAddress = AddressAliasHelper.applyL1ToL2Alias(callValueRefundAddress);
-    }
+Она передает сообщение в bridge/inbox infrastructure.
 
-    return _unsafeCreateRetryableTicket(
-        to,
-        l2CallValue,
-        maxSubmissionCost,
-        excessFeeRefundAddress,
-        callValueRefundAddress,
-        gasLimit,
-        maxFeePerGas,
-        amount,
-        data
-    );
-}
-```
-
----
-
-## Объяснение функции
-
-`AbsInbox._createRetryableTicket(...)` — lower-level Inbox step для создания retryable ticket.
-
-Эта функция ближе к message system, чем к token accounting.
-
-Главная идея:
+## Главные инварианты
 
 ```text
-Inbox создает message, но bridge должен передать правильные параметры.
+1. Retryable ticket must preserve the intended L2 target.
+2. Retryable ticket must preserve the intended calldata.
+3. Refund behavior must not redirect value in an unintended way.
 ```
 
----
+## Address Aliasing
 
-## Важные моменты логики
+Для L1 -> L2 сообщений Arbitrum может использовать address aliasing.
 
-### value check
-
-Функция проверяет, что amount покрывает:
+Простая идея:
 
 ```text
-maxSubmissionCost + l2CallValue + gasLimit * maxFeePerGas
+L1 contract address на L2 может отображаться как aliased address.
 ```
 
-Если средств недостаточно, происходит revert.
-
----
-
-### address aliasing
-
-Если refund address является contract, применяется L1 -> L2 alias:
-
-```solidity
-AddressAliasHelper.applyL1ToL2Alias(...)
-```
-
-Это важно, чтобы contract refund address мог управлять средствами на L2.
-
----
-
-## Инварианты
-
-- Retryable ticket должен сохранить правильный L2 target.
-- Calldata должна сохраниться без искажения.
-- Payment/gas values должны быть достаточными.
-- Contract refund addresses должны использовать aliasing.
-- Sender/refund assumptions должны соответствовать Arbitrum rules.
+Если aliasing обработан неправильно, L2 может увидеть неправильного sender.

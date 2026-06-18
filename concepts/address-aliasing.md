@@ -1,39 +1,37 @@
-# Arbitrum Address Aliasing
+﻿# Address Aliasing
 
-Address aliasing — это механизм Arbitrum, который применяется, когда L1 contract отправляет сообщение на L2.
+## Что это
 
-Простая идея:
+Address aliasing - это механизм, при котором L1 contract address на L2 может отображаться как другой адрес.
 
-```text
-Если L1 contract вызывает L2,
-то L2 может видеть не raw L1 address,
-а aliased address.
-```
-
-Зачем это нужно:
+Простыми словами:
 
 ```text
-Один и тот же address может существовать на L1 и L2,
-но контролироваться разной логикой.
+L1 contract sender != обычный L2 address sender
 ```
 
-Поэтому Arbitrum смещает address L1 contract sender в специальный aliased address.
+## Зачем нужно
 
-Для аудита важно:
+Чтобы L2 мог отличать:
 
 ```text
-Если L2 проверяет sender, нужно понять: он должен проверять raw address или aliased address?
+сообщение пришло от L1 contract
+или вызов сделал обычный L2 address
 ```
 
-Главный риск:
+## Почему важно для аудита
+
+Если aliasing обработан неправильно:
 
 ```text
-Wrong sender check = broken cross-chain auth
+L2 может увидеть неправильного sender
+auth check может сломаться
+refund может уйти не туда
+message может исполниться не тем путем
 ```
 
-Инварианты:
+## Главный инвариант
 
-- Если L1 contract отправляет message на L2, L2 auth должен учитывать aliasing.
-- Counterpart gateway должен проверяться в правильной форме.
-- Auth не должен принимать spoofed sender.
-- Raw address и aliased address нельзя путать.
+```text
+Address aliasing must be handled correctly when relevant.
+```

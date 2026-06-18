@@ -1,6 +1,12 @@
-# Function Review: outboundEscrowTransfer(...)
+﻿# Function Review: outboundEscrowTransfer(...)
 
-## Function Code
+## Что делает функция
+
+`outboundEscrowTransfer(...)` - accounting boundary deposit flow.
+
+Именно здесь bridge должен реально получить или заблокировать L1 токены пользователя.
+
+## Код функции
 
 ```solidity
 function outboundEscrowTransfer(
@@ -8,8 +14,6 @@ function outboundEscrowTransfer(
     address _from,
     uint256 _amount
 ) internal virtual returns (uint256 amountReceived) {
-    // this method is virtual since different subclasses can handle escrow differently
-    // user funds are escrowed on the gateway using this function
     uint256 prevBalance = IERC20(_l1Token).balanceOf(address(this));
     IERC20(_l1Token).safeTransferFrom(_from, address(this), _amount);
     uint256 postBalance = IERC20(_l1Token).balanceOf(address(this));
@@ -17,46 +21,30 @@ function outboundEscrowTransfer(
 }
 ```
 
----
-
-## Объяснение функции
-
-`outboundEscrowTransfer(...)` — это L1 escrow step в deposit flow.
-
-Функция переводит токены пользователя в gateway/escrow и возвращает фактически полученный amount.
-
-Главная идея:
+## Главная формула
 
 ```text
-Bridge должен credit'ить L2 только на сумму, которую реально получил на L1.
+actualReceived = balanceAfter - balanceBefore
 ```
 
----
-
-## Важные моменты логики
-
-### balanceBefore / balanceAfter
-
-Функция измеряет баланс до и после transfer:
+## Главные инварианты
 
 ```text
-actualReceived = postBalance - prevBalance
+1. Amount actually received by escrow must equal amount credited on L2.
+2. The escrowed token must be the intended L1 token.
 ```
 
-Это защищает accounting от fee-on-transfer токенов.
+## Почему нельзя просто доверять `_amount`
 
----
+`_amount` - это то, что пользователь попросил отправить.
 
-### safeTransferFrom
+`actualReceived` - это сколько контракт реально получил.
 
-Используется `safeTransferFrom`, поэтому false-return ERC20 не должен silently pass.
+Для fee-on-transfer token:
 
----
+```text
+User sends: 100
+Bridge receives: 98
+```
 
-## Инварианты
-
-- Токены должны реально перейти от пользователя в L1 escrow.
-- Failed transfer должен остановить deposit.
-- Returned amount должен отражать actual received amount.
-- L1 escrowed amount должен равняться L2 credited amount.
-- Bridge не должен использовать nominal `_amount`, если actual received меньше.
+Если bridge credit 100 на L2, accounting ломается.

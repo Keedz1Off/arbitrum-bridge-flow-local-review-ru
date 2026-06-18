@@ -1,30 +1,18 @@
-# Break Think Analysis
+﻿# Break Think
 
-Эта папка для ручного Break Think анализа.
+Эта папка для ручного анализа последствий нарушения инвариантов.
 
 Формат:
 
 ```text
-Invariant -> Consequence
+INVARIANT
+
+CONSEQUENCES
 ```
 
-## MAIN DEPOSIT FUNCTIONS
+Фокус:
 
 ```text
-outboundTransfer(...)
-outboundEscrowTransfer(...)
-finalizeInboundTransfer(...)
+main invariants first
+additional checks later
 ```
-
-## MAIN WITHDRAWAL FUNCTIONS
-
-```text
-outboundTransfer(...) / withdraw(...)
-burn(...) / lock(...)
-finalizeInboundTransfer(...) / finalizeWithdrawal(...)
-```
-
-## 1 INVARIANT
-
-
-## 2 CONSEQUENCES

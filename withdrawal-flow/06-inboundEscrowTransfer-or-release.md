@@ -1,61 +1,16 @@
-# Function Review: inboundEscrowTransfer(...) / release(...)
+﻿# Function Review: inboundEscrowTransfer(...) / release(...)
 
-## Function Code
+## Что делает функция
 
-```solidity
-function inboundEscrowTransfer(
-    address _l1Token,
-    address _dest,
-    uint256 _amount
-) internal virtual {
-    // this method is virtual since different subclasses can handle escrow differently
-    IERC20(_l1Token).safeTransfer(_dest, _amount);
-}
-```
+Это финальный release step на L1.
 
----
+Bridge отправляет escrowed tokens получателю после valid withdrawal.
 
-## Объяснение функции
-
-`inboundEscrowTransfer(...)` — финальный L1 release step в withdrawal flow.
-
-После verified finalization функция переводит L1 tokens из escrow получателю.
-
-Главная идея:
+## Главные инварианты
 
 ```text
-Released on L1 должен равняться burned / locked on L2.
+1. Escrow must release only the verified amount.
+2. Escrow must release the correct L1 token.
+3. Escrow must release to the intended L1 recipient.
+4. Escrow must not release more tokens than it holds.
 ```
-
----
-
-## Важные моменты логики
-
-### safeTransfer
-
-Функция использует:
-
-```solidity
-IERC20(_l1Token).safeTransfer(_dest, _amount);
-```
-
-То есть L1 escrow реально отправляет токены recipient.
-
----
-
-### final accounting boundary
-
-Это последний accounting boundary withdrawal flow.
-
-Если тут release amount неверный, bridge может выдать больше, чем было burned на L2.
-
----
-
-## Инварианты
-
-- Released amount на L1 должен равняться verified burned / locked amount на L2.
-- Release должен происходить только после valid finalization.
-- `_dest` должен быть intended L1 recipient.
-- `_l1Token` должен быть expected L1 token.
-- Escrow не должен release'ить больше, чем держит.
-- Один message не должен trigger'ить release дважды.

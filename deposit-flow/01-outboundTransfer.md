@@ -1,6 +1,12 @@
-# Function Review: outboundTransfer(...)
+﻿# Function Review: outboundTransfer(...)
 
-## Function Code
+## Что делает функция
+
+`outboundTransfer(...)` - главный entry point для deposit flow L1 -> L2.
+
+Пользователь вызывает эту функцию на L1, чтобы начать перенос токена на L2.
+
+## Код функции
 
 ```solidity
 function outboundTransfer(
@@ -10,60 +16,35 @@ function outboundTransfer(
     uint256 _maxGas,
     uint256 _gasPriceBid,
     bytes calldata _data
-) public payable override returns (bytes memory res) {
-    return
-        outboundTransferCustomRefund(_l1Token, _to, _to, _amount, _maxGas, _gasPriceBid, _data);
+) external payable returns (bytes memory) {
+    return outboundTransferCustomRefund(_l1Token, _to, _to, _amount, _maxGas, _gasPriceBid, _data);
 }
 ```
 
----
-
-## Объяснение функции
-
-`outboundTransfer(...)` — это главный L1 entry point для начала deposit в Arbitrum.
-
-Пользователь вызывает эту функцию, когда хочет перевести токены с L1 на L2.
-
-В этой реализации функция является wrapper-ом: она передает параметры в `outboundTransferCustomRefund(...)`, где находится основная deposit-логика.
-
-Главная идея:
+## Flow внутри
 
 ```text
-L2 message должен отражать то, что реально произошло на L1.
+outboundTransfer(...)
+-> outboundEscrowTransfer(...)
+-> getOutboundCalldata(...)
+-> createRetryableTicket(...)
+-> finalizeInboundTransfer(...) on L2
 ```
 
----
+## Главные инварианты
 
-## Важные моменты логики
-
-### Wrapper logic
-
-Функция не делает escrow напрямую. Она вызывает:
-
-```solidity
-outboundTransferCustomRefund(...);
+```text
+1. L1 escrowed amount must equal L2 minted / released amount.
+2. The selected L1 token must be the intended token.
+3. The L2 recipient must match the intended recipient.
 ```
 
-Это значит, что основной security review нужно продолжать внутри downstream-функции.
+## Важные моменты
 
----
+`outboundTransfer(...)` сам по себе не завершает bridge. Он только начинает flow и передает параметры дальше.
 
-### Recipient и refund
+Самая важная проверка для аудитора:
 
-Вызов передает `_to` дважды:
-
-```solidity
-outboundTransferCustomRefund(_l1Token, _to, _to, ...)
+```text
+Does the L2 message represent what actually happened on L1?
 ```
-
-То есть в deprecated wrapper один и тот же address используется как destination recipient и refund-related address.
-
----
-
-## Инварианты
-
-- L1 escrowed amount должен равняться L2 minted / released amount.
-- `_l1Token` должен быть ожидаемым L1 token.
-- `_to` должен остаться правильным L2 recipient.
-- Downstream calldata должно кодировать правильный amount/token/recipient.
-- Deposit message не должен финализироваться дважды.

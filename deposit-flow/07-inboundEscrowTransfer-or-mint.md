@@ -1,58 +1,19 @@
-# Function Review: inboundEscrowTransfer(...) / mint(...)
+﻿# Function Review: inboundEscrowTransfer(...) / mint(...)
 
-## Function Code
+## Что делает функция
 
-```solidity
-function inboundEscrowTransfer(
-    address _l2Address,
-    address _dest,
-    uint256 _amount
-) internal virtual {
-    // this method is virtual since different subclasses can handle escrow differently
-    IArbToken(_l2Address).bridgeMint(_dest, _amount);
-}
-```
+Это финальный token credit step на L2.
 
----
+После проверки bridge message функция release/mint токены получателю.
 
-## Объяснение функции
-
-`inboundEscrowTransfer(...)` — финальный token credit step на L2.
-
-После успешной finalization функция mint'ит L2 representation token получателю.
-
-Главная идея:
+## Главные инварианты
 
 ```text
-Minted amount на L2 должен соответствовать verified L1 escrowed amount.
+1. Credited amount on L2 must equal verified L1 escrowed amount.
+2. The recipient must match the authenticated bridge message.
+3. The token credited on L2 must match the intended L2 token.
 ```
 
----
+## Важная мысль
 
-## Важные моменты логики
-
-### bridgeMint
-
-Функция вызывает:
-
-```solidity
-IArbToken(_l2Address).bridgeMint(_dest, _amount);
-```
-
-Это значит, что supply на L2 увеличивается.
-
----
-
-### authorized flow
-
-Эта функция internal, но безопасность зависит от того, что ее вызывает только verified finalization logic.
-
----
-
-## Инварианты
-
-- Mint должен происходить только после valid finalization.
-- `_amount` должен равняться verified bridge amount.
-- `_dest` должен быть intended recipient.
-- `_l2Address` должен быть expected L2 token.
-- Один deposit не должен приводить к double mint.
+Если здесь поменять amount/token/recipient, весь предыдущий flow может быть правильным, но финальный результат будет неправильным.
