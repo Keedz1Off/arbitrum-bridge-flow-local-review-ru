@@ -3,29 +3,29 @@
 ## outboundTransfer(...)
 
 ```text
-INVARIANT
-L1 escrowed amount must equal L2 minted / released amount.
+ИНВАРИАНТ
+Количество токенов, заблокированное на L1, должно равняться количеству токенов, заминченному или выданному на L2.
 
-CONSEQUENCES
+ПОСЛЕДСТВИЯ
 
 ```
 
 ## createRetryableTicket(...)
 
 ```text
-INVARIANT
-Retryable ticket must target the correct L2 gateway.
+ИНВАРИАНТ
+Retryable ticket должен указывать на правильный L2 gateway.
 
-CONSEQUENCES
+ПОСЛЕДСТВИЯ
 
 ```
 
 ## finalizeInboundTransfer(...)
 
 ```text
-INVARIANT
-Only an authentic L1 -> L2 bridge message may finalize a deposit.
+ИНВАРИАНТ
+Только подлинное bridge-сообщение L1 -> L2 может финализировать deposit.
 
-CONSEQUENCES
+ПОСЛЕДСТВИЯ
 
 ```

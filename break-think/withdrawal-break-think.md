@@ -3,29 +3,29 @@
 ## burn(...)
 
 ```text
-INVARIANT
-Tokens must be burned on L2 before L1 release.
+ИНВАРИАНТ
+Токены должны быть сожжены на L2 перед выдачей токенов на L1.
 
-CONSEQUENCES
+ПОСЛЕДСТВИЯ
 
 ```
 
 ## finalizeWithdrawal(...)
 
 ```text
-INVARIANT
-Only an authentic L2 -> L1 message can release L1 tokens.
+ИНВАРИАНТ
+Только подлинное bridge-сообщение L2 -> L1 может выдать L1 токены.
 
-CONSEQUENCES
+ПОСЛЕДСТВИЯ
 
 ```
 
 ## release(...)
 
 ```text
-INVARIANT
-Released amount must equal burned amount.
+ИНВАРИАНТ
+Количество выданных токенов должно равняться количеству сожженных токенов.
 
-CONSEQUENCES
+ПОСЛЕДСТВИЯ
 
 ```

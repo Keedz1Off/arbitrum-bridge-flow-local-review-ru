@@ -5,14 +5,14 @@
 Формат:
 
 ```text
-INVARIANT
+ИНВАРИАНТ
 
-CONSEQUENCES
+ПОСЛЕДСТВИЯ
 ```
 
 Фокус:
 
 ```text
-main invariants first
-additional checks later
+сначала главные инварианты
+потом дополнительные проверки
 ```
