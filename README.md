@@ -1,6 +1,6 @@
 ﻿# Arbitrum Bridge Flow Local Review RU
 
-![Uploading image.pngâ€¦]()
+![Uploading image.png¦]()
 
 
 
