@@ -159,8 +159,24 @@ arbitrum-bridge-flow-local-review/
 |-- concepts/
 |   `-- address-aliasing.md
 |
-`-- break-think/
+|-- break-think/
+|   `-- README.md
+|
+`-- exploit-labs/
     `-- README.md
+```
+
+---
+
+## Exploit Labs
+
+Папка `exploit-labs/` содержит упрощенные PoC-style notes.
+
+Она показывает, как можно доказывать нарушение bridge invariants через маленькие тестовые примеры:
+
+```text
+missing messenger check
+missing counterpart bridge check
 ```
 
 ---
